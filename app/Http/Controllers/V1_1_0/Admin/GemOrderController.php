@@ -1,0 +1,162 @@
+<?php
+
+namespace App\Http\Controllers\V1_1_0\Admin;
+
+use App\GemOrderHeader;
+use App\Http\Requests\Admin\IndexRequest;
+use App\OrderHeader;
+use App\Repositories\Rest\RestRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+
+class GemOrderController extends Controller
+{
+    /**
+     * @var RestRepository
+     */
+    private $rest;
+
+    public function __construct(GemOrderHeader $rest)
+    {
+
+        $this->rest = new RestRepository($rest);
+
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(IndexRequest $request)
+    {
+        $data = $request->all();
+
+        $callback = function () use ($data) {
+            $response = $this->rest->getModel()->withRelatedModels()
+                ->whereHas('user')->orderBy('created_at','desc');
+            if (isset($data['status_option_id']) && $data['status_option_id']) {
+                $response = $response->whereStatusOptionId($data['status_option_id']);
+            }
+
+	        if (isset($data['keyword']) && $data['keyword']) {
+		        $response = $response->where('order_number', 'like', '%' . $data['keyword'] . '%')
+                    ->orWhereHas('user', function ($query) use ($data) {
+//                        $query->whereUsername($data['keyword']);
+                        $query->where('username', 'like', '%' . $data['keyword'] . '%');
+                    });
+	        }
+
+	        $response = json_decode($data['paginate']) ? $response->paginate($data['per_page']) : $response->get();
+
+            return listResponse($response);
+        };
+
+        return $this->exceptionHandler($callback);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $callback = function () use ($id) {
+
+            if ($response = $this->rest->getModel()->withRelatedModels()->find($id)) {
+                return showResponse($response);
+            }
+
+            return notFoundResponse();
+        };
+
+        return $this->exceptionHandler($callback);
+
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        $data = $request->all();
+
+        $callback = function () use ($data, $id) {
+
+            if ($response = $this->rest->getModel()->find($id)) {
+
+                $response->fill($data)->save();
+
+                return showResponse($response);
+            }
+
+            return notFoundResponse();
+        };
+
+        return $this->exceptionHandler($callback);
+
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        //
+        $callback = function () use ($id) {
+
+            if ($response = $this->rest->getModel()->find($id)) {
+
+                $response->delete();
+
+                return deletedResponse();
+            }
+
+            return notFoundResponse();
+        };
+
+        return $this->exceptionHandler($callback);
+
+    }
+}

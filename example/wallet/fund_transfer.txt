@@ -1,0 +1,13 @@
+$source = [
+        "account" => "0010045109086713",
+        "type" => "ACCOUNT_NUMBER",
+        "currency"=> "GEM"
+];
+$destination = [
+    "account" => "0045853997122097",
+    "type" => "DEVICE_ID",
+    "currency"=> "GEM"
+];
+$amount = 100;
+
+$res = $this->walletRepository->fundTransfer($source,$destination,$amount);

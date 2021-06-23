@@ -1,0 +1,2 @@
+$filter = ["page" => 1];
+$res = $this->walletRepository->transactionLog("0045853997122097", "DEVICE_ID", $filter);
